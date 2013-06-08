@@ -5,6 +5,11 @@
  */
 
 /*
+ * TODO
+ * add a license
+ */
+
+/*
  * Usage:
  *	After including this file, create a list of arguments with the START_ARGS,
  *	DESCRIBE_ARG, and END_ARGS macros (listed shortly after this comment)
@@ -19,7 +24,7 @@
  * START_ARGS(Args)
  *		DESCRIBE_ARG(Help, 'h', "help", NoArg, "\tPrint help text")
  * END_ARGS
- * 
+ *
  * int main(int argc, char* argv[]) {
  *		Gargamel::Process(Args, argc, argv);
  *		if( Gargamel::ArgumentSet[Help].argumentPresent )
@@ -27,7 +32,7 @@
  * }
  *
  * Notes:
- *	The arguments can also take arguments (long form only), which will be taken 
+ *	The arguments can also take arguments (long form only), which will be taken
  *	as the next argument in the programs argument list. If a default value for
  *	an argument is required, use the DESCRIBE_ARG_DEFAULT macro, which allows
  *	you to specify a default string, as the argument after the argument style
@@ -107,7 +112,7 @@ namespace Gargamel {
 #endif
 
 		/************************************************************
-		   Anything below this point need not be read in order to 
+		   Anything below this point need not be read in order to
 		  understand how to use this header, only for how it works!
 		************************************************************/
 
@@ -213,7 +218,7 @@ namespace Gargamel {
 
 	bool SetArguments(ArgumentDescription const * descs) {
 		ArgumentDescription Empty = {0,0,0,ArgStyle::NoArg,0};
-		
+
 		//need to find the max descs value
 		int maxIdx = -1;
 		int CurIdx = -1;
