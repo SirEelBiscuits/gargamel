@@ -27,7 +27,7 @@
  *
  * int main(int argc, char* argv[]) {
  *		Gargamel::Process(Args, argc, argv);
- *		if( Gargamel::ArgumentSet[Help].argumentPresent )
+ *		if( Gargamel::ArgumentSet[Help].isArgumentPresent )
  *			Gargamel::ShowUsage();
  * }
  *
@@ -54,17 +54,21 @@
 
 #ifndef GARGAMEL_LEAN_AND_MEAN
 #	define DESCRIBE_ARG(id, shortName, longName, style, helpText) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, false, helpText },
-#	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue, helpText) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, helpText },
+	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, false, false, helpText },
+#	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue, false, helpText) \
+	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, false, false, helpText },
+#	define DESCRIBE_ARG_ARRAY(id, longName, helpText) \
+	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, new std::vector<char const*>(), false, true, helpText },
 #else
 #	define DESCRIBE_ARG(id, shortName, longName, style) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, false },
+	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, false, false },
 #	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, false },
+	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, false, false },
+#	define DESCRIBE_ARG_ARRAY(id, longName) \
+	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, new std::vector<char const*>(), false, true },
 #endif
 
-#define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, false} };
+#define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, false, false} };
 
 //We can ignore the warning about _s versions of functions because the strings
 // being used should either be literals, or arguments, which should be
@@ -92,21 +96,41 @@ namespace Gargamel {
 		char			shortOptName;
 		char const*		longOptName;
 		EArgStyle		argumentStyle;
-		char const*		argumentValue;
-		bool			argumentPresent;
+		union {
+			std::vector<char const*>* argumentArray;
+			char const*		  argumentValue;
+		};
+		bool			isArgumentPresent;
+		bool			isArgumentArray;
 
 #ifndef GARGAMEL_LEAN_AND_MEAN
 		char const*		helpText;
 
 		float floatVal() {
-			float Ret;
-			sscanf(argumentValue, "%f", &Ret);
+			float Ret = 0.f;
+			if( !isArgumentArray )
+				sscanf(argumentValue, "%f", &Ret);
+			return Ret;
+		}
+
+		float floatVal(int idx) {
+			float Ret = 0.f;
+			if( isArgumentArray )
+				sscanf(argumentArray->at(idx), "%f", &Ret);
 			return Ret;
 		}
 
 		int intVal() {
-			int Ret;
-			sscanf(argumentValue, "%d", &Ret);
+			int Ret = 0;
+			if( !isArgumentArray )
+				sscanf(argumentValue, "%d", &Ret);
+			return Ret;
+		}
+
+		int intVal(int idx) {
+			int Ret = 0;
+			if( isArgumentArray )
+				sscanf(argumentArray->at(idx), "%d", &Ret);
 			return Ret;
 		}
 #endif
@@ -121,6 +145,7 @@ namespace Gargamel {
 				&& shortOptName == 0
 				&& longOptName == 0
 				&& argumentStyle == 0
+				&& isArgumentArray == false
 				&& argumentValue == 0
 #ifndef GARGAMEL_LEAN_AND_MEAN
 				&& helpText == 0
@@ -172,21 +197,31 @@ namespace Gargamel {
 			if( ArgumentSet[i].longOptName == NULL )
 				continue;
 			if( strcmp(argv[cur] + 2, ArgumentSet[i].longOptName ) == 0 ) {
-				ArgumentSet[i].argumentPresent = true;
+				ArgumentSet[i].isArgumentPresent = true;
 				switch( ArgumentSet[i].argumentStyle ) {
 				case ArgStyle::NoArg:
 					break;
 				case ArgStyle::OptionalArg:
 					if( cur + 1 < argc
 							&& argv[cur+1][0] != '-' ) {
-						ArgumentSet[i].argumentValue = argv[cur+1];
+						if( ArgumentSet[i].isArgumentArray )
+							ArgumentSet[i].argumentArray
+								->push_back(argv[cur+1]);
+						else
+							ArgumentSet[i].argumentValue
+								= argv[cur+1];
 						++cur;
 					}
 					break;
 				case ArgStyle::RequiredArg:
 					if( cur + 1 < argc ) {
 						++cur;
-						ArgumentSet[i].argumentValue = argv[cur];
+						if( ArgumentSet[i].isArgumentArray )
+							ArgumentSet[i].argumentArray
+								->push_back(argv[cur]);
+						else
+							ArgumentSet[i].argumentValue
+								= argv[cur];
 						return true;
 					}
 					else
@@ -207,7 +242,7 @@ namespace Gargamel {
 			bool FlagUsed = false;
 			for( int i = 0; i < NumArgs; ++i )
 				if( *flags == ArgumentSet[i].shortOptName ) {
-					ArgumentSet[i].argumentPresent = true;
+					ArgumentSet[i].isArgumentPresent = true;
 					FlagUsed = true;
 				}
 			if( !FlagUsed )
@@ -252,7 +287,21 @@ namespace Gargamel {
 					printf(", ");
 			}
 			if( Original[CurIdx].longOptName != NULL )
-				printf("--%s\n", Original[CurIdx].longOptName );
+			{
+				printf("--%s", Original[CurIdx].longOptName );
+				switch( Original[CurIdx].argumentStyle )
+				{
+				case ArgStyle::OptionalArg:
+					printf(" [Argument]\n");
+					break;
+				case ArgStyle::RequiredArg:
+					printf(" Argument\n");
+					break;
+				case ArgStyle::NoArg:
+				default:
+					break;
+				}
+			}
 			printf("%s\n", Original[CurIdx].helpText);
 		}
 	}
