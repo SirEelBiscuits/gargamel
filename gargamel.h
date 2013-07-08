@@ -54,21 +54,28 @@
 
 #ifndef GARGAMEL_LEAN_AND_MEAN
 #	define DESCRIBE_ARG(id, shortName, longName, style, helpText) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, false, false, helpText },
-#	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue, false, helpText) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, false, false, helpText },
+	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false, helpText },
+
+#	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue, helpText) \
+	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false, helpText },
+
 #	define DESCRIBE_ARG_ARRAY(id, longName, helpText) \
-	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, new std::vector<char const*>(), false, true, helpText },
+	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true, helpText },
+
+#	define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, 0, false, false, 0} };
 #else
 #	define DESCRIBE_ARG(id, shortName, longName, style) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, false, false },
+	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false },
+
 #	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, false, false },
+	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false },
+
 #	define DESCRIBE_ARG_ARRAY(id, longName) \
-	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, new std::vector<char const*>(), false, true },
+	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true },
+
+#	define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, 0, false, false} };
 #endif
 
-#define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, false, false} };
 
 //We can ignore the warning about _s versions of functions because the strings
 // being used should either be literals, or arguments, which should be
@@ -96,10 +103,10 @@ namespace Gargamel {
 		char			shortOptName;
 		char const*		longOptName;
 		EArgStyle		argumentStyle;
-		union {
-			std::vector<char const*>* argumentArray;
+		//union {
 			char const*		  argumentValue;
-		};
+			std::vector<char const*>* argumentArray;
+		//};
 		bool			isArgumentPresent;
 		bool			isArgumentArray;
 
