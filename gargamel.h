@@ -49,6 +49,7 @@
 #pragma once
 #include <string.h>
 #include <stdio.h>
+#include <vector>
 
 #define START_ARGS(name) Gargamel::ArgumentDescription name[] = {
 
