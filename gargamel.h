@@ -261,7 +261,10 @@ namespace Gargamel {
 
 	bool SetArguments(ArgumentDescription const * descs) {
 		ArgumentDescription Empty = {
-			0, 0, 0, ArgStyle::NoArg, 0, nullptr, false, false, nullptr
+			0, 0, 0, ArgStyle::NoArg, 0, nullptr, false, false
+#ifndef GARGAMEL_LEAN_AND_MEAN
+				, nullptr
+#endif
 		};
 
 		//need to find the max descs value
