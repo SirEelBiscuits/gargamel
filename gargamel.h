@@ -260,7 +260,9 @@ namespace Gargamel {
 	}
 
 	bool SetArguments(ArgumentDescription const * descs) {
-		ArgumentDescription Empty = {0,0,0,ArgStyle::NoArg,0};
+		ArgumentDescription Empty = {
+			0, 0, 0, ArgStyle::NoArg, 0, nullptr, false, false, nullptr
+		};
 
 		//need to find the max descs value
 		int maxIdx = -1;
@@ -309,8 +311,9 @@ namespace Gargamel {
 				default:
 					break;
 				}
+				printf(",");
 			}
-			printf("%s\n", Original[CurIdx].helpText);
+			printf("\t%s\n", Original[CurIdx].helpText);
 		}
 	}
 #endif
