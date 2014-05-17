@@ -55,24 +55,24 @@
 
 #ifndef GARGAMEL_LEAN_AND_MEAN
 #	define DESCRIBE_ARG(id, shortName, longName, style, helpText) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false, helpText },
+	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false, helpText },
 
 #	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue, helpText) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false, helpText },
+	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false, helpText },
 
 #	define DESCRIBE_ARG_ARRAY(id, longName, helpText) \
-	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true, helpText },
+	{ static_cast<int>(id), 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true, helpText },
 
 #	define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, 0, false, false, 0} };
 #else
 #	define DESCRIBE_ARG(id, shortName, longName, style) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false },
+	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false },
 
 #	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue) \
-	{ id, shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false },
+	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false },
 
 #	define DESCRIBE_ARG_ARRAY(id, longName) \
-	{ id, 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true },
+	{ static_cast<int>(id), 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true },
 
 #	define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, 0, false, false} };
 #endif
@@ -294,10 +294,12 @@ namespace Gargamel {
 	void ShowUsage() {
 		int CurIdx = -1;
 		while( !Original[++CurIdx].IsEmpty() ) {
+			bool shouldTabPrecede = false;
 			if( Original[CurIdx].shortOptName != '\0' ) {
 				printf("-%c", Original[CurIdx].shortOptName);
 				if( Original[CurIdx].longOptName != NULL )
 					printf(", ");
+				shouldTabPrecede = true;
 			}
 			if( Original[CurIdx].longOptName != NULL )
 			{
@@ -315,8 +317,11 @@ namespace Gargamel {
 					break;
 				}
 				printf(",");
+				shouldTabPrecede = true;
 			}
-			printf("\t%s\n", Original[CurIdx].helpText);
+			if(shouldTabPrecede)
+				printf("\t");
+			printf("%s\n", Original[CurIdx].helpText);
 		}
 	}
 #endif
