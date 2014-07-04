@@ -1,333 +1,178 @@
-/*
- * Gargamel - Gargamel ARGument AMaLgamator
- * This file is intended to simplify processing command-line arguments
- * Author: Jameson Thatcher
- */
-
-/*
- * TODO
- * add a license
- */
-
-/*
- * Usage:
- *	After including this file, create a list of arguments with the START_ARGS,
- *	DESCRIBE_ARG, and END_ARGS macros (listed shortly after this comment)
- *
- * Example code:
- *
- * #include <gargamel.h>
- * enum ArgNames {
- *		Unknown,
- *		Help,
- * };
- * START_ARGS(Args)
- *		DESCRIBE_ARG(Help, 'h', "help", NoArg, "\tPrint help text")
- * END_ARGS
- *
- * int main(int argc, char* argv[]) {
- *		Gargamel::Process(Args, argc, argv);
- *		if( Gargamel::ArgumentSet[Help].isArgumentPresent )
- *			Gargamel::ShowUsage();
- * }
- *
- * Notes:
- *	The arguments can also take arguments (long form only), which will be taken
- *	as the next argument in the programs argument list. If a default value for
- *	an argument is required, use the DESCRIBE_ARG_DEFAULT macro, which allows
- *	you to specify a default string, as the argument after the argument style
- *
- *	Use dummy entries to help formatting help text, if nicer usage instructions
- *	are desired
- *
- *	If the argument type conversions, and the usage helper aren't needed,
- *	define GARGAMEL_LEAN_AND_MEAN before including this file, and they won't be
- *	compiled in.
- */
-
-//if you don't support pragma once, I don't want to be friends with you anyway
 #pragma once
-#include <string.h>
-#include <stdio.h>
+#include <string>
+#include <iostream>
 #include <vector>
 
-#define START_ARGS(name) Gargamel::ArgumentDescription name[] = {
-
-#ifndef GARGAMEL_LEAN_AND_MEAN
-#	define DESCRIBE_ARG(id, shortName, longName, style, helpText) \
-	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false, helpText },
-
-#	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue, helpText) \
-	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false, helpText },
-
-#	define DESCRIBE_ARG_ARRAY(id, longName, helpText) \
-	{ static_cast<int>(id), 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true, helpText },
-
-#	define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, 0, false, false, 0} };
-#else
-#	define DESCRIBE_ARG(id, shortName, longName, style) \
-	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, 0, 0, false, false },
-
-#	define DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultValue) \
-	{ static_cast<int>(id), shortName, longName, Gargamel::ArgStyle::style, defaultValue, 0, false, false },
-
-#	define DESCRIBE_ARG_ARRAY(id, longName) \
-	{ static_cast<int>(id), 0, longName, Gargamel::ArgStyle::RequiredArg, 0, new std::vector<char const*>(), false, true },
-
-#	define END_ARGS {0, 0, 0, Gargamel::ArgStyle::NoArg, 0, 0, false, false} };
-#endif
-
-
-//We can ignore the warning about _s versions of functions because the strings
-// being used should either be literals, or arguments, which should be
-// guaranteed to be safe. If the library is used outside recommendations here,
-// all behaviour is undefined. All of it.
-#ifdef _MSC_VER
-#	pragma warning(push)
-#	pragma warning( disable: 4996 )
-#endif
+#define GGM_DESCRIBE_ARG(id, shortName, longName, style, helpText) \
+{ static_cast<int>(id), shortName, longName,                       \
+	Gargamel::ArgumentStyle::style, false, "", helpText }
+#define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style,   \
+	defaultVal, helpText )                                           \
+{ static_cast<int>(id), shortName, longName,                       \
+	Gargamel::ArgumentStyle::style, false, defaultVal, helpText }
+#define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)             \
+{ static_cast<int>(id), '\0', longName,                            \
+ Gargamel::ArgumentStyle::RequiredArgument, true, "", helpText }
 
 namespace Gargamel {
-
-	namespace ArgStyle {
-		enum Type {
-			NoArg,
-			OptionalArg,
-			RequiredArg
-		};
-	}
-	typedef ArgStyle::Type EArgStyle;
+	enum ArgumentStyle {
+		NoArgument,
+		OptionalArgument,
+		RequiredArgument,
+	};
 
 	struct ArgumentDescription {
 	public:
-		int				id;
-		char			shortOptName;
-		char const*		longOptName;
-		EArgStyle		argumentStyle;
-		//union {
-			char const*		  argumentValue;
-			std::vector<char const*>* argumentArray;
-		//};
-		bool			isArgumentPresent;
-		bool			isArgumentArray;
+		int const id;
+		char const shortOptionName;
+		std::string const longOptionName;
+		ArgumentStyle const argumentStyle;
+		bool const isArgumentArray;
+		std::string defaultValue;
+		std::string const helpText;
+	};
+	typedef std::vector<ArgumentDescription> ArgumentList;
 
-#ifndef GARGAMEL_LEAN_AND_MEAN
-		char const*		helpText;
+	struct ArgumentValue {
+	public:
+		std::string argumentValue;
+		std::vector<std::string> argumentArray;
+		bool isArgumentPresent;
 
-		float floatVal() {
-			float Ret = 0.f;
-			if( !isArgumentArray )
-				sscanf(argumentValue, "%f", &Ret);
-			return Ret;
+		float floatValue() {
+			float ret = 0.f;
+			std::stof(argumentValue, &ret);
+			return ret;
 		}
 
-		float floatVal(int idx) {
-			float Ret = 0.f;
-			if( isArgumentArray )
-				sscanf(argumentArray->at(idx), "%f", &Ret);
-			return Ret;
+		float floatValue(int index) {
+			float ret = 0.f;
+			std::stof(argumentArray[index], &ret);
+			return ret;
 		}
 
-		int intVal() {
-			int Ret = 0;
-			if( !isArgumentArray )
-				sscanf(argumentValue, "%d", &Ret);
-			return Ret;
+		float intValue() {
+			int ret = 0;
+			std::stoi(argumentValue, &ret);
+			return ret;
 		}
 
-		int intVal(int idx) {
-			int Ret = 0;
-			if( isArgumentArray )
-				sscanf(argumentArray->at(idx), "%d", &Ret);
-			return Ret;
-		}
-#endif
-
-		/************************************************************
-		   Anything below this point need not be read in order to
-		  understand how to use this header, only for how it works!
-		************************************************************/
-
-		bool IsEmpty() const {
-			return id == 0
-				&& shortOptName == 0
-				&& longOptName == 0
-				&& argumentStyle == 0
-				&& isArgumentArray == false
-				&& argumentValue == 0
-#ifndef GARGAMEL_LEAN_AND_MEAN
-				&& helpText == 0
-#endif
-				;
+		float intValue(int index) {
+			int ret = 0;
+			std::stoi(argumentArray[index], &ret);
+			return ret;
 		}
 	};
 
-	bool SetArguments(ArgumentDescription const * descs);
-	bool ProcessLongArgument(int& cur, int argc, char* argv[]);
-	bool ProcessFlagList(char const * flags);
+	bool Process(int argc, char* argv[]);
+	bool ProcessLongArgument(int& cur, int argc, char* argv[] );
+	bool ProcessFlagList(char const* flags);
+	void ShowUsage();
 
-	ArgumentDescription* ArgumentSet;
-#ifndef GARGAMEL_LEAN_AND_MEAN
-	ArgumentDescription const * Original;
-#endif
+	static ArgumentList const* Arguments;
+	static std::vector<ArgumentValue> ArgumentValues;
+	static int PositionalArguments;
 
-	int NumArgs;
-
-	bool Process(ArgumentDescription const * descs, int argc, char* argv[]) {
-		if( !SetArguments(descs) )
-			return true;
-
-#ifndef GARGAMEL_LEAN_AND_MEAN
-		Original = descs;
-#endif
-
+	bool Process(int argc, char* argv[]) {
 		bool badCommandLine = false;
-		for(int i = 1; i < argc ; ++i ) {
-			if( argv[i][0] != '-' ) {
+		for(int i = 1; i < argc - PositionalArguments; ++i) {
+			if(argv[i][0] != '-') {
 				badCommandLine = true;
 				continue;
 			}
-
-			if( argv[i][1] != '\0' ) {
-				if( argv[i][1] != '-' )
+			if(argv[i][1] != '\0') {
+				if(argv[i][1] != '-')
 					badCommandLine |= ProcessFlagList(argv[i] + 1);
 				else
-					ProcessLongArgument(i, argc, argv);
-			}
+					badCommandLine |= ProcessLongArgument(i, argc, argv);
+			} else
+				badCommandLine = true;
 		}
 		return badCommandLine;
 	}
 
-	bool ProcessLongArgument(int& cur, int argc, char* argv[]) {
-		if( argv[cur][0] != '-' || argv[cur][1] != '-' )
-			return false;
-		for( int i = 0; i < NumArgs; ++i ) {
-			if( ArgumentSet[i].longOptName == NULL )
+	bool ProcessLongArgument(int& cur, int argc, char* argv[] ) {
+		for(auto& arg : *Arguments) {
+			if(arg.longOptionName.length() == 0)
 				continue;
-			if( strcmp(argv[cur] + 2, ArgumentSet[i].longOptName ) == 0 ) {
-				ArgumentSet[i].isArgumentPresent = true;
-				switch( ArgumentSet[i].argumentStyle ) {
-				case ArgStyle::NoArg:
+			if(arg.longOptionName.compare(argv[cur] + 2) == 0) {
+				ArgumentValues[arg.id].isArgumentPresent = true;
+				switch(arg.argumentStyle) {
+				case ArgumentStyle::NoArgument:
 					break;
-				case ArgStyle::OptionalArg:
-					if( cur + 1 < argc
-							&& argv[cur+1][0] != '-' ) {
-						if( ArgumentSet[i].isArgumentArray )
-							ArgumentSet[i].argumentArray
-								->push_back(argv[cur+1]);
-						else
-							ArgumentSet[i].argumentValue
-								= argv[cur+1];
+				case ArgumentStyle::OptionalArgument:
+				case ArgumentStyle::RequiredArgument:
+					if(cur + 1 < argc) {
 						++cur;
-					}
-					break;
-				case ArgStyle::RequiredArg:
-					if( cur + 1 < argc ) {
-						++cur;
-						if( ArgumentSet[i].isArgumentArray )
-							ArgumentSet[i].argumentArray
-								->push_back(argv[cur]);
+						if(arg.isArgumentArray)
+							ArgumentValues[arg.id].argumentArray.push_back(argv[cur]);
 						else
-							ArgumentSet[i].argumentValue
-								= argv[cur];
-						return true;
-					}
-					else
+							ArgumentValues[arg.id].argumentValue = argv[cur];
+					} else if(arg.argumentStyle == ArgumentStyle::RequiredArgument)
 						return false;
-					break;
-				default:
-					//oops?
-					break;
 				}
 			}
 		}
 		return true;
 	}
 
-	bool ProcessFlagList(char const * flags) {
-		bool FlagNotUnderstood = false;
+	bool ProcessFlagList(char const* flags) {
+		bool flagNotUnderstood = false;
 		for(; *flags != '\0'; ++flags) {
 			bool FlagUsed = false;
-			for( int i = 0; i < NumArgs; ++i )
-				if( *flags == ArgumentSet[i].shortOptName ) {
-					ArgumentSet[i].isArgumentPresent = true;
+			for(auto& arg : *Arguments)
+				if(*flags == arg.shortOptionName) {
+					ArgumentValues[arg.id].isArgumentPresent = true;
 					FlagUsed = true;
 				}
-			if( !FlagUsed )
-				FlagNotUnderstood = true;
+			flagNotUnderstood |= FlagUsed == false;
 		}
-		return !FlagNotUnderstood;
+		return flagNotUnderstood;
 	}
 
-	bool SetArguments(ArgumentDescription const * descs) {
-		ArgumentDescription Empty = {
-			0, 0, 0, ArgStyle::NoArg, 0, nullptr, false, false
-#ifndef GARGAMEL_LEAN_AND_MEAN
-				, nullptr
-#endif
-		};
-
-		//need to find the max descs value
-		int maxIdx = -1;
-		int CurIdx = -1;
-		while( !descs[++CurIdx].IsEmpty() ) {
-			if( descs[CurIdx].id > maxIdx ) {
-				maxIdx = descs[CurIdx].id;
-			}
+	void SetArguments(
+		ArgumentList const& argumentList,
+		int PositionalArguments
+	) {
+		Gargamel::PositionalArguments = PositionalArguments;
+		Arguments = &argumentList;
+		ArgumentValues.clear();
+		for(auto& arg : *Arguments) {
+			if(static_cast<int>(arg.id) >= ArgumentValues.size())
+				ArgumentValues.resize(static_cast<int>(arg.id) + 1);
+			ArgumentValues.argumentValue = arg.defaultValue;
 		}
-
-		NumArgs = maxIdx+1;
-		if( NumArgs <= 0 )
-			return false;
-		ArgumentSet = new ArgumentDescription[NumArgs];
-		for( int i = 0; i < NumArgs; ++i )
-			ArgumentSet[i] = Empty;
-
-		CurIdx = -1;
-		while( !descs[++CurIdx].IsEmpty() ) {
-			ArgumentSet[descs[CurIdx].id] = descs[CurIdx];
-		}
-		return true;
 	}
 
-#ifndef GARGAMEL_LEAN_AND_MEAN
 	void ShowUsage() {
-		int CurIdx = -1;
-		while( !Original[++CurIdx].IsEmpty() ) {
+		using std::cout;
+		using std::endl;
+
+		for(auto& arg : *Arguments) {
 			bool shouldTabPrecede = false;
-			if( Original[CurIdx].shortOptName != '\0' ) {
-				printf("-%c", Original[CurIdx].shortOptName);
-				if( Original[CurIdx].longOptName != NULL )
-					printf(", ");
+			if(arg.shortOptionName != '\0') {
+				cout << "-" << arg.shortOptionName;
+				if(arg.longOptionName.length() != 0)
+					cout << ", ";
 				shouldTabPrecede = true;
 			}
-			if( Original[CurIdx].longOptName != NULL )
-			{
-				printf("--%s", Original[CurIdx].longOptName );
-				switch( Original[CurIdx].argumentStyle )
-				{
-				case ArgStyle::OptionalArg:
-					printf(" [Argument]\n");
+			if(arg.longOptionName.length != 0) {
+				cout << "--" << arg.longOptionName;
+				switch(arg.argumentStyle) {
+				case ArgumentStyle::OptionalArgument:
+					cout << " [Argument],";
 					break;
-				case ArgStyle::RequiredArg:
-					printf(" Argument\n");
-					break;
-				case ArgStyle::NoArg:
+				case ArgumentStyle::RequiredArgument:
+					cout << " Argument,";
+				case ArgumentStyle::NoArgument:
 				default:
 					break;
 				}
-				printf(",");
 				shouldTabPrecede = true;
 			}
 			if(shouldTabPrecede)
-				printf("\t");
-			printf("%s\n", Original[CurIdx].helpText);
+				cout << "\n\t";
+			cout << arg.helpText << endl;
 		}
 	}
-#endif
 }
-
-#ifdef _MSC_VER
-#	pragma warning(pop)
-#endif
-

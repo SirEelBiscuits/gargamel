@@ -3,16 +3,16 @@
 #include <iostream>
 #include <vector>
 
-#define GGM_DESCRIBE_ARG(id, shortName, longName, style, helpText)            \
-{ id, shortName, longName, Gargamel::ArgumentStyle::style,                    \
-	false, "", helpText }
-#define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style,              \
-	defaultVal, helpText )                                                      \
-{ id, shortName, longName, Gargamel::ArgumentStyle::style,                    \
-	false, defaultVal, helpText }
-#define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)                        \
-{ id, '\0', longName, Gargamel::ArgumentStyle::RequiredArgument,              \
-	true, "", helpText}
+#define GGM_DESCRIBE_ARG(id, shortName, longName, style, helpText) \
+{ static_cast<int>(id), shortName, longName,                       \
+	Gargamel::ArgumentStyle::style, false, "", helpText }
+#define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style,   \
+	defaultVal, helpText )                                           \
+{ static_cast<int>(id), shortName, longName,                       \
+	Gargamel::ArgumentStyle::style, false, defaultVal, helpText }
+#define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)             \
+{ static_cast<int>(id), '\0', longName,                            \
+ Gargamel::ArgumentStyle::RequiredArgument, true, "", helpText }
 
 namespace Gargamel {
 	enum ArgumentStyle {
