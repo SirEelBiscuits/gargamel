@@ -3,12 +3,16 @@
 #include <iostream>
 #include <vector>
 
-#define GGM_DESCRIBE_ARG(id, shortName, longName, style, helpText) \
-{ id, shortName, longName, Gargamel::ArgumentStyle::style, false, "", helpText }
-#define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style, defaultVal, helpText ) \
-{ id, shortName, longName, Gargamel::ArgumentStyle::style, false, defaultVal, helpText }
-#define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)
-{ id, '\0', longName, Gargamel::ArgumentStyle::RequiredArgument, true "", helpText}
+#define GGM_DESCRIBE_ARG(id, shortName, longName, style, helpText)            \
+{ id, shortName, longName, Gargamel::ArgumentStyle::style,                    \
+	false, "", helpText }
+#define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style,              \
+	defaultVal, helpText )                                                      \
+{ id, shortName, longName, Gargamel::ArgumentStyle::style,                    \
+	false, defaultVal, helpText }
+#define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)                        \
+{ id, '\0', longName, Gargamel::ArgumentStyle::RequiredArgument,              \
+	true, "", helpText}
 
 namespace Gargamel {
 	enum ArgumentStyle {
@@ -70,22 +74,70 @@ namespace Gargamel {
 	static int PositionalArguments;
 
 	bool Process(int argc, char* argv[]) {
-		return false;
+		bool badCommandLine = false;
+		for(int i = 1; i < argc - PositionalArguments; ++i) {
+			if(argv[i][0] != '-') {
+				badCommandLine = true;
+				continue;
+			}
+			if(argv[i][1] != '\0') {
+				if(argv[i][1] != '-')
+					badCommandLine |= ProcessFlagList(argv[i] + 1);
+				else
+					badCommandLine |= ProcessLongArgument(i, argc, argv);
+			} else
+				badCommandLine = true;
+		}
+		return badCommandLine;
 	}
 
 	bool ProcessLongArgument(int& cur, int argc, char* argv[] ) {
-
+		for(auto& arg : *Arguments) {
+			if(arg.longOptionName.length() == 0)
+				continue;
+			if(arg.longOptionName.compare(argv[cur] + 2) == 0) {
+				ArgumentValues[arg.id].isArgumentPresent = true;
+				switch(arg.argumentStyle) {
+				case ArgumentStyle::NoArgument:
+					break;
+				case ArgumentStyle::OptionalArgument:
+				case ArgumentStyle::RequiredArgument:
+					if(cur + 1 < argc) {
+						++cur;
+						if(arg.isArgumentArray)
+							ArgumentValues[arg.id].argumentArray.push_back(argv[cur]);
+						else
+							ArgumentValues[arg.id].argumentValue = argv[cur];
+					} else if(arg.argumentStyle == ArgumentStyle::RequiredArgument)
+						return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	bool ProcessFlagList(char const* flags) {
-		return false;
+		bool flagNotUnderstood = false;
+		for(; *flags != '\0'; ++flags) {
+			bool FlagUsed = false;
+			for(auto& arg : *Arguments)
+				if(*flags == arg.shortOptionName) {
+					ArgumentValues[arg.id].isArgumentPresent = true;
+					FlagUsed = true;
+				}
+			flagNotUnderstood |= FlagUsed == false;
+		}
+		return flagNotUnderstood;
 	}
 
-	bool SetArguments(ArgumentList const& argumentList, int PositionalArguments) {
+	void SetArguments(
+		ArgumentList const& argumentList,
+		int PositionalArguments
+	) {
 		Gargamel::PositionalArguments = PositionalArguments;
 		Arguments = &argumentList;
 		ArgumentValues.clear();
-		for(auto& arg : argumentList) {
+		for(auto& arg : *Arguments) {
 			if(static_cast<int>(arg.id) >= ArgumentValues.size())
 				ArgumentValues.resize(static_cast<int>(arg.id) + 1);
 			ArgumentValues.argumentValue = arg.defaultValue;
