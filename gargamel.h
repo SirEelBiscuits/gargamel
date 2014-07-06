@@ -1,3 +1,54 @@
+/*
+ * gargamel.h
+ *
+ * This system provides a quick and easy way of dealing with commandline
+ * arguemts. It requires a C++11 compliant compiler.
+ *
+ * USAGE
+ *
+ * You need an enum (or enum class) uniquely identifying all commandline
+ * arugments supported, and an array of descriptors, for example:
+ *
+ * enum EArgs { arg1, arg2, arg3 };
+ * Gargamel::ArgumentList Arguments {
+ *	GGM_DESCRIBE_ARG(arg1, 'a', "alpha", NoArgument, "help message")
+ *  GGM_DESCRIBE_ARG_DEFAULT(arg2, '\0', "dinner", RequiredArgument, "eggs", "dinner")
+ *  GGM_DESCRIBE_ARG_ARRAY(arg3, '\0', "shopping")
+ * };
+ *
+ * To set Gargamel up to use an argumentlist, call Gargamel::SetArguments(). Its
+ * second argument is the number of 'positional' arguments expected - this many
+ * arguments from the end of the argument list will be ignored for processing.
+ * Use Gargamel::Process() to set up the actual values, passing in argc and argv
+ * for it to read. The results may then be quieried like so:
+ *
+ * Gargamel::ArgumentValues[Identifier].isArgumentPresent; //a flag
+ * Gargamel::ArgumentValues[Identifier].argumentValue; //a string
+ * Gargamel::ArgumentValues[Identifier].argumentArray; //an array of strings.
+ *
+ * There are additionaly some courtesy functions for quering the value as an int,
+ * or a float. The functions intValue() and floatValue() take an optional index
+ * to allow querying into the array.
+ *
+ * MACRO ARGUMENTS
+ *
+ * shortName - an argument that may be used like "-h or -X". These can be
+ *             combined like "-hX"
+ *
+ * longName - A longer arguement like "---help"
+ *
+ * style - one of "NoArgument", "OptionalArgument", "RequiredArgument". Only
+ *         long arguements can take an argument, and it is done like so:
+ *         "--something theArgument"
+ *
+ * defaultVal - This will be populated into the argumentValue field, regardless
+ *              of whether or not the argument is passed into the program
+ *
+ * helpText - This is used to create an automatic usage message, which may be
+ *            shown by calling Gargamel::ShowUsage()
+ *
+ */
+
 #pragma once
 #include <string>
 #include <iostream>
