@@ -5,14 +5,14 @@
 
 #define GGM_DESCRIBE_ARG(id, shortName, longName, style, helpText) \
 { static_cast<int>(id), shortName, longName,                       \
-	Gargamel::ArgumentStyle::style, false, "", helpText }
+	Gargamel::ArgumentStyle::style, false, "", helpText },
 #define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style,   \
 	defaultVal, helpText )                                           \
 { static_cast<int>(id), shortName, longName,                       \
-	Gargamel::ArgumentStyle::style, false, defaultVal, helpText }
+	Gargamel::ArgumentStyle::style, false, defaultVal, helpText },
 #define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)             \
 { static_cast<int>(id), '\0', longName,                            \
- Gargamel::ArgumentStyle::RequiredArgument, true, "", helpText }
+ Gargamel::ArgumentStyle::RequiredArgument, true, "", helpText },
 
 namespace Gargamel {
 	enum ArgumentStyle {
@@ -40,30 +40,23 @@ namespace Gargamel {
 		bool isArgumentPresent;
 
 		float floatValue() {
-			float ret = 0.f;
-			std::stof(argumentValue, &ret);
-			return ret;
+			return std::stof(argumentValue);
 		}
 
 		float floatValue(int index) {
-			float ret = 0.f;
-			std::stof(argumentArray[index], &ret);
-			return ret;
+			return std::stof(argumentArray[index]);
 		}
 
 		float intValue() {
-			int ret = 0;
-			std::stoi(argumentValue, &ret);
-			return ret;
+			return std::stoi(argumentValue);
 		}
 
 		float intValue(int index) {
-			int ret = 0;
-			std::stoi(argumentArray[index], &ret);
-			return ret;
+			return std::stoi(argumentArray[index]);
 		}
 	};
 
+	void SetArguments(ArgumentList const& argumentList,	int PositionalArguments);
 	bool Process(int argc, char* argv[]);
 	bool ProcessLongArgument(int& cur, int argc, char* argv[] );
 	bool ProcessFlagList(char const* flags);
@@ -72,6 +65,20 @@ namespace Gargamel {
 	static ArgumentList const* Arguments;
 	static std::vector<ArgumentValue> ArgumentValues;
 	static int PositionalArguments;
+
+	void SetArguments(
+		ArgumentList const& argumentList,
+		int PositionalArguments
+	) {
+		Gargamel::PositionalArguments = PositionalArguments;
+		Arguments = &argumentList;
+		ArgumentValues.clear();
+		for(auto& arg : *Arguments) {
+			if(static_cast<int>(arg.id) >= ArgumentValues.size())
+				ArgumentValues.resize(static_cast<int>(arg.id) + 1);
+			ArgumentValues[arg.id].argumentValue = arg.defaultValue;
+		}
+	}
 
 	bool Process(int argc, char* argv[]) {
 		bool badCommandLine = false;
@@ -102,7 +109,8 @@ namespace Gargamel {
 					break;
 				case ArgumentStyle::OptionalArgument:
 				case ArgumentStyle::RequiredArgument:
-					if(cur + 1 < argc) {
+					if(cur + 1 < argc
+						&& argv[cur + 1][0] != '-') {
 						++cur;
 						if(arg.isArgumentArray)
 							ArgumentValues[arg.id].argumentArray.push_back(argv[cur]);
@@ -130,20 +138,6 @@ namespace Gargamel {
 		return flagNotUnderstood;
 	}
 
-	void SetArguments(
-		ArgumentList const& argumentList,
-		int PositionalArguments
-	) {
-		Gargamel::PositionalArguments = PositionalArguments;
-		Arguments = &argumentList;
-		ArgumentValues.clear();
-		for(auto& arg : *Arguments) {
-			if(static_cast<int>(arg.id) >= ArgumentValues.size())
-				ArgumentValues.resize(static_cast<int>(arg.id) + 1);
-			ArgumentValues.argumentValue = arg.defaultValue;
-		}
-	}
-
 	void ShowUsage() {
 		using std::cout;
 		using std::endl;
@@ -156,7 +150,7 @@ namespace Gargamel {
 					cout << ", ";
 				shouldTabPrecede = true;
 			}
-			if(arg.longOptionName.length != 0) {
+			if(arg.longOptionName.length() != 0) {
 				cout << "--" << arg.longOptionName;
 				switch(arg.argumentStyle) {
 				case ArgumentStyle::OptionalArgument:
