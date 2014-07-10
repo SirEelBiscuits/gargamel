@@ -1,5 +1,6 @@
 /*
  * gargamel.h
+ * author: Jameson Thatcher (a.k.a. SirEel). jameson@bluescreenofdoom.com
  *
  * This system provides a quick and easy way of dealing with commandline
  * arguemts. It requires a C++11 compliant compiler.
