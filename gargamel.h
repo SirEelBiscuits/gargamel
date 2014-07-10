@@ -108,7 +108,7 @@ namespace Gargamel {
 		}
 	};
 
-	void SetArguments(ArgumentList const& argumentList,	int PositionalArguments);
+	void SetArguments(ArgumentList const& argumentList, int PositionalArguments);
 	bool Process(int argc, char* argv[]);
 	bool ProcessLongArgument(int& cur, int argc, char* argv[] );
 	bool ProcessFlagList(char const* flags);
