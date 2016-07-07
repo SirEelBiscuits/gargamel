@@ -12,9 +12,9 @@
  *
  * enum EArgs { arg1, arg2, arg3 };
  * Gargamel::ArgumentList Arguments {
- *	GGM_DESCRIBE_ARG(arg1, 'a', "alpha", NoArgument, "help message")
- *  GGM_DESCRIBE_ARG_DEFAULT(arg2, '\0', "dinner", RequiredArgument, "eggs", "dinner")
- *  GGM_DESCRIBE_ARG_ARRAY(arg3, '\0', "shopping")
+ *	GGM_DESCRIBE_ARG        (arg1, 'a',  "alpha",  NoArgument,               "help message")
+ *	GGM_DESCRIBE_ARG_DEFAULT(arg2, '\0', "dinner", RequiredArgument, "eggs", "dinner")
+ *	GGM_DESCRIBE_ARG_ARRAY  (arg3, '\0', "shopping")
  * };
  *
  * To set Gargamel up to use an argument list, call Gargamel::SetArguments(). Its
@@ -24,8 +24,8 @@
  * for it to read. The results may then be queried like so:
  *
  * Gargamel::ArgumentValues[Identifier].isArgumentPresent; //a flag
- * Gargamel::ArgumentValues[Identifier].argumentValue; //a string
- * Gargamel::ArgumentValues[Identifier].argumentArray; //an array of strings.
+ * Gargamel::ArgumentValues[Identifier].argumentValue;     //a string
+ * Gargamel::ArgumentValues[Identifier].argumentArray;     //an array of strings.
  *
  * There are additionaly some courtesy functions for querying the value as an int
  * or a float. The functions intValue() and floatValue() take an optional index
@@ -59,7 +59,7 @@
 { static_cast<int>(id), shortName, longName,                       \
 	Gargamel::ArgumentStyle::style, false, "", helpText },
 #define GGM_DESCRIBE_ARG_DEFAULT(id, shortName, longName, style,   \
-	defaultVal, helpText )                                           \
+	defaultVal, helpText )                                     \
 { static_cast<int>(id), shortName, longName,                       \
 	Gargamel::ArgumentStyle::style, false, defaultVal, helpText },
 #define GGM_DESCRIBE_ARG_ARRAY(id, longName, helpText)             \
