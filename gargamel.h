@@ -3,12 +3,12 @@
  * author: Jameson Thatcher (a.k.a. SirEel). jameson@bluescreenofdoom.com
  *
  * This system provides a quick and easy way of dealing with commandline
- * arguemts. It requires a C++11 compliant compiler.
+ * arguments. It requires a C++11 compliant compiler.
  *
  * USAGE
  *
  * You need an enum (or enum class) uniquely identifying all commandline
- * arugments supported, and an array of descriptors, for example:
+ * arguments supported, and an array of descriptors, for example:
  *
  * enum EArgs { arg1, arg2, arg3 };
  * Gargamel::ArgumentList Arguments {
@@ -17,17 +17,17 @@
  *  GGM_DESCRIBE_ARG_ARRAY(arg3, '\0', "shopping")
  * };
  *
- * To set Gargamel up to use an argumentlist, call Gargamel::SetArguments(). Its
+ * To set Gargamel up to use an argument list, call Gargamel::SetArguments(). Its
  * second argument is the number of 'positional' arguments expected - this many
  * arguments from the end of the argument list will be ignored for processing.
  * Use Gargamel::Process() to set up the actual values, passing in argc and argv
- * for it to read. The results may then be quieried like so:
+ * for it to read. The results may then be queried like so:
  *
  * Gargamel::ArgumentValues[Identifier].isArgumentPresent; //a flag
  * Gargamel::ArgumentValues[Identifier].argumentValue; //a string
  * Gargamel::ArgumentValues[Identifier].argumentArray; //an array of strings.
  *
- * There are additionaly some courtesy functions for quering the value as an int,
+ * There are additionaly some courtesy functions for querying the value as an int
  * or a float. The functions intValue() and floatValue() take an optional index
  * to allow querying into the array.
  *
@@ -39,7 +39,7 @@
  * longName - A longer arguement like "---help"
  *
  * style - one of "NoArgument", "OptionalArgument", "RequiredArgument". Only
- *         long arguements can take an argument, and it is done like so:
+ *         long arguments can take an argument, and it is done like so:
  *         "--something theArgument"
  *
  * defaultVal - This will be populated into the argumentValue field, regardless
