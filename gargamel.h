@@ -36,7 +36,7 @@
  * shortName - an argument that may be used like "-h or -X". These can be
  *             combined like "-hX"
  *
- * longName - A longer arguement like "---help"
+ * longName - A longer arguement like "--help"
  *
  * style - one of "NoArgument", "OptionalArgument", "RequiredArgument". Only
  *         long arguments can take an argument, and it is done like so:
